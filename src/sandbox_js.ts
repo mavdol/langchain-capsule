@@ -11,6 +11,7 @@ export const executeCode = task(
 export const main = task(
   { name: "main", compute: "HIGH"},
   async (code: string): Promise<any> => {
-    return await executeCode(code);
+    const response = await executeCode(code);
+    return response.result;
   }
 );

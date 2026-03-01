@@ -1,11 +1,10 @@
 # langchain-capsule
 
-[Capsule](https://github.com/mavdol/capsule) WebAssembly sandbox integration for LangChain.
+[Capsule](https://github.com/mavdol/capsule) integration for LangChain.
 
 ## What is this?
 
-`langchain-capsule` gives LangChain agents the ability to **safely execute
-Python and javascript code** in an isolated WebAssembly sandbox.
+`langchain-capsule` gives LangChain agents the ability to safely execute Python and javascript code in an isolated WebAssembly sandbox.
 
 The WebAssembly sandbox files (.wasm) are already bundled inside this package; no configuration or network request is necessary to execute the sandboxes dynamically.
 
@@ -33,6 +32,10 @@ js_tool = CapsuleJSTool()
 result = asyncio.run(js_tool.arun("1 + 2"))
 print(result) # "3"
 ```
+
+## Check our main repo
+
+Visit [Capsule](https://github.com/mavdol/capsule) repository for more information.
 
 ## License
 

@@ -1,6 +1,6 @@
 # langchain-capsule
 
-[Capsule](https://github.com/mavdol/capsule) WebAssembly sandbox integration for LangChain agents.
+[Capsule](https://github.com/mavdol/capsule) WebAssembly sandbox integration for LangChain.
 
 ## What is this?
 

@@ -1,6 +1,6 @@
 # langchain-capsule
 
-[Capsule](https://github.com/mavdol/capsule) integration for LangChain.
+Capsule integration for LangChain.
 
 ## What is this?
 
@@ -33,7 +33,7 @@ result = asyncio.run(js_tool.arun("1 + 2"))
 print(result) # "3"
 ```
 
-## Check our main repo
+## More information
 
 Visit [Capsule](https://github.com/mavdol/capsule) repository for more information.
 

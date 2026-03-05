@@ -1,7 +1,7 @@
 import ast
 from capsule import task
 
-@task(name="executeCode", compute="HIGH")
+@task(name="executeCode", compute="20000000", ram="256MB")
 def execute_code(code: str):
     tree = ast.parse(code)
 
@@ -23,7 +23,7 @@ def execute_code(code: str):
 
     return result
 
-@task(name="main", compute="HIGH")
+@task(name="main", compute="20000000", ram="256MB")
 def main(code: str):
     response = execute_code(code)
 

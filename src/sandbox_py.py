@@ -23,7 +23,7 @@ def execute_code(code: str):
 
     return result
 
-@task(name="main", compute="20000000", ram="256MB")
+@task(name="main", compute="HIGH")
 def main(code: str):
     response = execute_code(code)
 

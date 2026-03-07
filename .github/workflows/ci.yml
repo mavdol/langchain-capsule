@@ -9,6 +9,48 @@ on:
       - main
 
 jobs:
+  build-wasm:
+    name: Build WebAssembly sandboxes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install capsule-run (PyPI)
+        run: pip install capsule-run
+
+      - name: Build python_sandbox.wasm
+        run: |
+          mkdir -p src/langchain-capsule/sandboxes
+          capsule build src/sandbox_py.py --export
+          mv src/sandbox_py.wasm src/langchain-capsule/sandboxes/sandbox_py.wasm
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install @capsule-run/cli (npm)
+        run: npm install -g @capsule-run/cli @capsule-run/sdk
+
+      - name: Build js_sandbox.wasm
+        run: |
+          capsule build src/sandbox_js.ts --export
+          mv src/sandbox_js.wasm src/langchain-capsule/sandboxes/sandbox_js.wasm
+
+      - name: Upload wasm sandboxes
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-sandboxes
+          path: src/langchain-capsule/sandboxes/
+
+
   test:
     runs-on: ubuntu-latest
     strategy:

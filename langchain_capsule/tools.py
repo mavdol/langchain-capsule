@@ -54,7 +54,7 @@ class CapsuleJSTool(BaseTool):
     """Execute JavaScript code inside an isolated Capsule WebAssembly sandbox."""
 
     name: str = "javascript_repl"
-    description = (
+    description: str = (
         "Execute JavaScript code in a secure isolated WebAssembly sandbox. "
         "Both standard output (console logs) and the last evaluated expression are returned."
     )

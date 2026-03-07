@@ -2,3 +2,5 @@ __pycache__
 .capsule
 .DS_Store
 .env
+
+*.wasm

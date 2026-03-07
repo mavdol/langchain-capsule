@@ -37,7 +37,12 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install @capsule-run/cli (npm)
-        run: npm install -g @capsule-run/cli @capsule-run/sdk
+        run: npm install -g @capsule-run/cli
+
+      - name: Setup package.json for SDK
+        run: |
+          echo '{"type": "module"}' > package.json
+          npm install @capsule-run/sdk
 
       - name: Build js_sandbox.wasm
         run: |

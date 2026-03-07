@@ -9,8 +9,8 @@ on:
       - main
 
 jobs:
-  build-wasm:
-    name: Build WebAssembly sandboxes
+  test:
+    name: test sandboxes
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -30,9 +30,9 @@ jobs:
 
       - name: Build python_sandbox.wasm
         run: |
-          mkdir -p src/langchain-capsule/sandboxes
+          mkdir -p langchain_capsule/sandboxes
           capsule build src/sandbox_py.py --export
-          mv src/sandbox_py.wasm src/langchain-capsule/sandboxes/sandbox_py.wasm
+          mv src/sandbox_py.wasm langchain_capsule/sandboxes/sandbox_py.wasm
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -51,13 +51,13 @@ jobs:
       - name: Build js_sandbox.wasm
         run: |
           capsule build src/sandbox_js.ts --export
-          mv src/sandbox_js.wasm src/langchain-capsule/sandboxes/sandbox_js.wasm
+          mv src/sandbox_js.wasm langchain_capsule/sandboxes/sandbox_js.wasm
 
       - name: Upload wasm sandboxes
         uses: actions/upload-artifact@v4
         with:
           name: wasm-sandboxes
-          path: src/langchain-capsule/sandboxes/
+          path: langchain_capsule/sandboxes/
 
       - name: Install dependencies
         run: |

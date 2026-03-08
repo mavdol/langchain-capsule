@@ -36,9 +36,11 @@ jobs:
       - name: Install capsule-run (PyPI)
         run: pip install capsule-run
 
+      - name: Create sandboxes directory
+        run: mkdir -p langchain_capsule/sandboxes
+
       - name: Build python_sandbox.wasm
         run: |
-          mkdir -p langchain_capsule/sandboxes
           capsule build src/sandbox_py.py --export
           mv src/sandbox_py.wasm langchain_capsule/sandboxes/sandbox_py.wasm
 
@@ -59,6 +61,11 @@ jobs:
         run: |
           capsule build src/sandbox_js.ts --export
           mv src/sandbox_js.wasm langchain_capsule/sandboxes/sandbox_js.wasm
+
+      - name: Clean up Node.js artifacts
+        run: |
+          rm -rf node_modules
+          rm -f package.json package-lock.json
 
       - name: Run tests
         run: pytest tests/ -v

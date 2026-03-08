@@ -37,9 +37,9 @@ class CapsulePythonTool(BaseTool):
 
     name: str = "python_repl"
     description: str = (
-        "Execute any Python code in a secure isolated WebAssembly sandbox. "
-        "The last evaluated expression is returned as the result. "
-        "End your code with an expression or return a value."
+        "Execute Python code in a secure isolated WebAssembly sandbox. "
+        "Both standard output (print statements) and the last evaluated expression are returned. "
+        "Supports pure Python only (no C extensions like numpy/pandas)."
     )
     handle_tool_error: bool = True
 
@@ -55,9 +55,8 @@ class CapsuleJSTool(BaseTool):
 
     name: str = "javascript_repl"
     description: str = (
-       "Execute any JavaScript or TypeScript code in a secure isolated WebAssembly sandbox. "
-       "The last evaluated expression is returned as the result. "
-       "End your code with an expression or return a value."
+        "Execute JavaScript code in a secure isolated WebAssembly sandbox. "
+        "Both standard output (console logs) and the last evaluated expression are returned."
     )
     handle_tool_error: bool = True
 

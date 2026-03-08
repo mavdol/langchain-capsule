@@ -54,6 +54,20 @@ json.dumps(data)
     assert '"hello"' in result
     assert '"world"' in result
 
+@pytest.mark.asyncio
+async def test_python_print_output():
+    code = """
+print("Hello")
+print("World")
+print("Test")
+42
+"""
+    result = await CapsulePythonTool().arun(code)
+    assert "Hello" in result
+    assert "World" in result
+    assert "Test" in result
+    assert "42" in result
+
 
 # ---- Python : Errors test ----
 @pytest.mark.asyncio
@@ -130,6 +144,20 @@ JSON.stringify(data)
     result = await CapsuleJSTool().arun(code)
     assert "hello" in result
     assert "world" in result
+
+@pytest.mark.asyncio
+async def test_js_console_output():
+    code = """
+console.log("Hello");
+console.log("World");
+console.log("Test");
+42
+"""
+    result = await CapsuleJSTool().arun(code)
+    assert "Hello" in result
+    assert "World" in result
+    assert "Test" in result
+    assert "42" in result
 
 
 # ---- JavaScript : Errors test ----

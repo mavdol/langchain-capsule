@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "langchain-capsule"
-version = "0.1.1"
+version = "0.1.2"
 description = "Capsule sandbox integration for LangChain — run code in isolated WebAssembly sandboxes"
 license = { text = "MIT" }
 readme = "README.md"
@@ -39,6 +39,7 @@ test = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["langchain_capsule"]
+artifacts = ["langchain_capsule/sandboxes/*.wasm"]
 
 [tool.hatch.metadata]
 allow-direct-references = true

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "langchain-capsule"
-version = "0.1.2"
+version = "0.1.3"
 description = "Capsule sandbox integration for LangChain — run code in isolated WebAssembly sandboxes"
 license = { text = "MIT" }
 readme = "README.md"

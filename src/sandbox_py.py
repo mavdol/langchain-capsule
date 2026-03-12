@@ -33,7 +33,9 @@ def execute_code(code: str):
     output = captured_output.getvalue()
 
     if output:
-        return output + str(result)
+        if result is not None:
+            return output + str(result)
+        return output
 
     return result
 

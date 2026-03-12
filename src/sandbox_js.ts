@@ -26,7 +26,10 @@ export const executeCode = task(
       const output = capturedOutput.join('\n');
 
       if (output) {
-        return output + '\n' + result;
+        if (result !== undefined) {
+          return output + '\n' + result;
+        }
+        return output;
       }
 
       return result;

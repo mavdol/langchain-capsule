@@ -73,16 +73,33 @@ async def main():
 asyncio.run(main())
 ```
 
-### With a LangChain agent
+### File operations
+
+The REPL tools can exchange files with the sandbox workspace. This is useful when the agent needs to process existing data or retrieve output files.
 
 ```python
+import asyncio
 from langchain_capsule import CapsulePythonREPLTool
-from langchain_core.language_models.chat_models import BaseChatModel
 
-tool = CapsulePythonREPLTool()
+async def main():
+    py = CapsulePythonREPLTool()
 
-# Pass the tool to any LangChain agent
-agent = your_llm.bind_tools([tool])
+    # Copy a local file into the sandbox
+    await py.import_file("./data.csv", "data.csv")
+
+    # Process it inside the sandbox
+    await py._arun("content = open('workspace/data.csv').read()")
+    await py._arun("open('workspace/result.txt', 'w').write(content.upper())")
+
+    # Retrieve the output
+    await py.export_file("result.txt", "./result.txt")
+
+    # Remove a file from the workspace
+    await py.delete_file("data.csv")
+
+    await py.close()
+
+asyncio.run(main())
 ```
 
 ## More information

@@ -1,6 +1,21 @@
+import os
+import tempfile
+from pathlib import Path
+
 import pytest
 from langchain_capsule import CapsuleJSREPLTool, CapsulePythonREPLTool
 from langchain_capsule.session import JSSession, PythonSession
+
+TESTS_DIR = Path(__file__).parent
+
+
+@pytest.fixture
+def project_file():
+    """Create a temporary file inside the project directory for import_file tests."""
+    path = TESTS_DIR / "fixture_import.txt"
+    path.write_text("hello capsule")
+    yield os.path.relpath(path)
+    path.unlink(missing_ok=True)
 
 
 # ---- PythonSession unit tests ----
@@ -78,6 +93,45 @@ async def test_python_sessions_are_isolated():
     assert str(await session_b.run("x")).strip() == "99"
     await session_a.close()
     await session_b.close()
+
+
+# ---- PythonSession file tests ----
+
+@pytest.mark.asyncio
+async def test_python_session_import_file(project_file):
+    session = PythonSession()
+    try:
+        await session.import_file(project_file, "hello.txt")
+        result = await session.run("open('workspace/hello.txt').read()")
+        assert "hello capsule" in result
+    finally:
+        await session.close()
+
+
+@pytest.mark.asyncio
+async def test_python_session_export_file():
+    session = PythonSession()
+    await session.run("open('workspace/out.txt', 'w').write('exported')")
+    with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
+        out_path = f.name
+    try:
+        await session.export_file("out.txt", out_path)
+        assert open(out_path).read() == "exported"
+    finally:
+        os.unlink(out_path)
+        await session.close()
+
+
+@pytest.mark.asyncio
+async def test_python_session_delete_file():
+    session = PythonSession()
+    await session.run("open('workspace/temp.txt', 'w').write('bye')")
+    await session.delete_file("temp.txt")
+    result = await session.run(
+        "import os; os.path.exists('workspace/temp.txt')"
+    )
+    assert str(result).strip() == "False"
+    await session.close()
 
 
 # ---- JSSession unit tests ----

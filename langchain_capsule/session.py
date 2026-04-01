@@ -21,6 +21,18 @@ class PythonSession:
             "{k: type(v).__name__ for k, v in vars().items() if not k.startswith('_')}"
         )
 
+    async def import_file(self, source_path: str, destination_path: str) -> None:
+        """Copy a file from the host filesystem into the session workspace."""
+        await self._session.import_file(source_path, destination_path)
+
+    async def export_file(self, source_path: str, destination_path: str) -> None:
+        """Copy a file from the session workspace to the host filesystem."""
+        await self._session.export_file(source_path, destination_path)
+
+    async def delete_file(self, path: str) -> None:
+        """Remove a file from the session workspace."""
+        await self._session.delete_file(path)
+
     async def reset(self) -> None:
         """Clear variable state without touching workspace files."""
         await self._session.reset()
@@ -44,6 +56,18 @@ class JSSession:
         """Return current variable names and their types."""
         with open(self._session._state_file, "r") as f:
             return f.read()
+
+    async def import_file(self, source_path: str, destination_path: str) -> None:
+        """Copy a file from the host filesystem into the session workspace."""
+        await self._session.import_file(source_path, destination_path)
+
+    async def export_file(self, source_path: str, destination_path: str) -> None:
+        """Copy a file from the session workspace to the host filesystem."""
+        await self._session.export_file(source_path, destination_path)
+
+    async def delete_file(self, path: str) -> None:
+        """Remove a file from the session workspace."""
+        await self._session.delete_file(path)
 
     async def reset(self) -> None:
         """Clear variable state without touching workspace files."""

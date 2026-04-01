@@ -108,6 +108,18 @@ class CapsulePythonREPLTool(BaseTool):
         """Return current variable names and their types."""
         return await self._get_session().get_state()
 
+    async def import_file(self, source_path: str, destination_path: str) -> None:
+        """Copy a file from the host filesystem into the session workspace."""
+        await self._get_session().import_file(source_path, destination_path)
+
+    async def export_file(self, source_path: str, destination_path: str) -> None:
+        """Copy a file from the session workspace to the host filesystem."""
+        await self._get_session().export_file(source_path, destination_path)
+
+    async def delete_file(self, path: str) -> None:
+        """Remove a file from the session workspace."""
+        await self._get_session().delete_file(path)
+
     async def reset(self) -> None:
         """Clear variable state without touching workspace files."""
         await self._get_session().reset()
@@ -154,6 +166,18 @@ class CapsuleJSREPLTool(BaseTool):
     async def get_state(self) -> str:
         """Return current variable names and their types."""
         return await self._get_session().get_state()
+
+    async def import_file(self, source_path: str, destination_path: str) -> None:
+        """Copy a file from the host filesystem into the session workspace."""
+        await self._get_session().import_file(source_path, destination_path)
+
+    async def export_file(self, source_path: str, destination_path: str) -> None:
+        """Copy a file from the session workspace to the host filesystem."""
+        await self._get_session().export_file(source_path, destination_path)
+
+    async def delete_file(self, path: str) -> None:
+        """Remove a file from the session workspace."""
+        await self._get_session().delete_file(path)
 
     async def reset(self) -> None:
         """Clear variable state without touching workspace files."""

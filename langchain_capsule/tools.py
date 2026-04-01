@@ -30,6 +30,7 @@ class CapsulePythonTool(BaseTool):
     name: str = "python_execution"
     description: str = (
         "Execute Python code in a secure isolated WebAssembly sandbox. "
+        "Each call is independent — no state is preserved between calls. "
         "Both standard output (print statements) and the last evaluated expression are returned. "
         "Supports pure Python only (no C extensions like numpy/pandas)."
     )
@@ -54,7 +55,8 @@ class CapsuleJSTool(BaseTool):
     name: str = "javascript_execution"
     description: str = (
         "Execute JavaScript code in a secure isolated WebAssembly sandbox. "
-        "Both standard output (console logs) and the last evaluated expression are returned."
+        "Each call is independent — no state is preserved between calls. "
+        "Both standard output (console.log) and the last evaluated expression are returned."
     )
     handle_tool_error: bool = True
 
@@ -71,13 +73,14 @@ class CapsuleJSTool(BaseTool):
             raise ToolException(str(e)) from e
 
 
-class CapsulePythonSessionTool(BaseTool):
+class CapsulePythonREPLTool(BaseTool):
     """Execute Python code in a persistent session, preserving state across calls."""
 
     name: str = "python_repl"
     description: str = (
         "Execute Python code in a persistent session. "
-        "Variables, imports (only /workspace), and functions defined in previous calls remain available. "
+        "Variables, imports, and functions defined in previous calls remain available. "
+        "File system access is limited to /workspace. "
         "Supports pure Python only (no C extensions like numpy/pandas)."
     )
     handle_tool_error: bool = True
@@ -118,13 +121,14 @@ class CapsulePythonSessionTool(BaseTool):
                 self._session = None
 
 
-class CapsuleJSSessionTool(BaseTool):
+class CapsuleJSREPLTool(BaseTool):
     """Execute JavaScript code in a persistent session, preserving state across calls."""
 
     name: str = "javascript_repl"
     description: str = (
         "Execute JavaScript code in a persistent session. "
-        "Variables, imports (only /workspace), and functions defined in previous calls remain available. "
+        "Variables and functions defined in previous calls remain available. "
+        "File system access is limited to /workspace."
     )
     handle_tool_error: bool = True
 

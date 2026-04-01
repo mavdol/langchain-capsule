@@ -1,13 +1,13 @@
 from langchain_capsule.tools import (
-    CapsuleJSSessionTool,
+    CapsuleJSREPLTool,
     CapsuleJSTool,
-    CapsulePythonSessionTool,
+    CapsulePythonREPLTool,
     CapsulePythonTool,
 )
 
 __all__ = [
     "CapsulePythonTool",
     "CapsuleJSTool",
-    "CapsulePythonSessionTool",
-    "CapsuleJSSessionTool",
+    "CapsulePythonREPLTool",
+    "CapsuleJSREPLTool",
 ]

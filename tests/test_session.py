@@ -1,5 +1,5 @@
 import pytest
-from langchain_capsule import CapsuleJSSessionTool, CapsulePythonSessionTool
+from langchain_capsule import CapsuleJSREPLTool, CapsulePythonREPLTool
 from langchain_capsule.session import JSSession, PythonSession
 
 
@@ -148,11 +148,11 @@ async def test_js_sessions_are_isolated():
     await session_b.close()
 
 
-# ---- CapsulePythonSessionTool integration tests ----
+# ---- CapsulePythonREPLTool integration tests ----
 
 @pytest.mark.asyncio
 async def test_python_tool_session_persistence():
-    tool = CapsulePythonSessionTool()
+    tool = CapsulePythonREPLTool()
     await tool._arun("x = 42")
     result = await tool._arun("x")
     assert str(result).strip() == "42"
@@ -161,7 +161,7 @@ async def test_python_tool_session_persistence():
 
 @pytest.mark.asyncio
 async def test_python_tool_get_state():
-    tool = CapsulePythonSessionTool()
+    tool = CapsulePythonREPLTool()
     await tool._arun("x = 1")
     state = await tool.get_state()
     assert "x" in state
@@ -169,14 +169,14 @@ async def test_python_tool_get_state():
 
 
 def test_python_tool_session_sync():
-    tool = CapsulePythonSessionTool()
+    tool = CapsulePythonREPLTool()
     tool._run("value = 7")
     result = tool._run("value * 6")
     assert str(result).strip() == "42"
 
 
 def test_python_tool_handle_tool_error_enabled():
-    tool = CapsulePythonSessionTool()
+    tool = CapsulePythonREPLTool()
     assert tool.handle_tool_error is True
     try:
         tool._run("1 / 0")
@@ -185,11 +185,11 @@ def test_python_tool_handle_tool_error_enabled():
 
 
 
-# ---- CapsuleJSSessionTool integration tests ----
+# ---- CapsuleJSREPLTool integration tests ----
 
 @pytest.mark.asyncio
 async def test_js_tool_session_persistence():
-    tool = CapsuleJSSessionTool()
+    tool = CapsuleJSREPLTool()
     await tool._arun("let x = 42")
     result = await tool._arun("x")
     assert str(result).strip() == "42"
@@ -198,7 +198,7 @@ async def test_js_tool_session_persistence():
 
 @pytest.mark.asyncio
 async def test_js_tool_get_state():
-    tool = CapsuleJSSessionTool()
+    tool = CapsuleJSREPLTool()
     await tool._arun("let x = 1")
     state = await tool.get_state()
     assert "x" in state
@@ -206,7 +206,7 @@ async def test_js_tool_get_state():
 
 
 def test_js_tool_handle_tool_error_enabled():
-    tool = CapsuleJSSessionTool()
+    tool = CapsuleJSREPLTool()
     assert tool.handle_tool_error is True
     try:
         tool._run("null.property")

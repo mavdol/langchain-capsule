@@ -33,40 +33,6 @@ jobs:
           pip install build twine
           pip install -e ".[test]"
 
-      - name: Install capsule-run (PyPI)
-        run: pip install capsule-run
-
-      - name: Create sandboxes directory
-        run: mkdir -p langchain_capsule/sandboxes
-
-      - name: Build python_sandbox.wasm
-        run: |
-          capsule build src/sandbox_py.py --export
-          mv src/sandbox_py.wasm langchain_capsule/sandboxes/sandbox_py.wasm
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install @capsule-run/cli (npm)
-        run: npm install -g @capsule-run/cli
-
-      - name: Setup package.json for SDK
-        run: |
-          echo '{"type": "module"}' > package.json
-          npm install @capsule-run/sdk
-
-      - name: Build js_sandbox.wasm
-        run: |
-          capsule build src/sandbox_js.ts --export
-          mv src/sandbox_js.wasm langchain_capsule/sandboxes/sandbox_js.wasm
-
-      - name: Clean up Node.js artifacts
-        run: |
-          rm -rf node_modules
-          rm -f package.json package-lock.json
-
       - name: Run tests
         run: pytest tests/ -v
 

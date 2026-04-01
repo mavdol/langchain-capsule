@@ -1,1 +1,0 @@
-"""WebAssembly sandbox binaries."""

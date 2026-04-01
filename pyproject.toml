@@ -23,7 +23,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "capsule-run>=0.6.3",
+    "capsule-run-adapter>=0.3.0",
     "langchain-core>=0.3.0",
 ]
 

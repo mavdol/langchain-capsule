@@ -1,6 +1,6 @@
 # langchain-capsule
 
-Capsule integration for LangChain — run Python and JavaScript code in isolated WebAssembly sandboxes.
+[Capsule](https://github.com/mavdol/capsule) integration for LangChain — run Python and JavaScript code in isolated WebAssembly sandboxes.
 
 [![CI](https://github.com/mavdol/langchain-capsule/actions/workflows/ci.yml/badge.svg)](https://github.com/mavdol/langchain-capsule/actions/workflows/ci.yml)
 

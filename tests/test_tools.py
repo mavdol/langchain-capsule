@@ -6,88 +6,109 @@ from langchain_core.tools import ToolException
 from langchain_capsule.tools import (
     CapsulePythonTool,
     CapsuleJSTool,
-    _invoke_sandbox,
-    _parse_capsule_error,
 )
 
 
-@pytest.fixture
-def run_mock():
-    with patch("langchain_capsule.tools.run", new_callable=AsyncMock) as mock:
-        yield mock
-
-
-# ── _parse_capsule_error ─────────────────────────────────────────────
-
-def test_parse_error_dict_with_message():
-    assert _parse_capsule_error({"message": "bad input", "error_type": "ValueError"}) == "bad input"
-
-def test_parse_error_dict_with_only_error_type():
-    assert _parse_capsule_error({"error_type": "RuntimeError"}) == "RuntimeError"
-
-def test_parse_error_dict_empty():
-    result = _parse_capsule_error({})
-    assert isinstance(result, str)
-
-def test_parse_error_plain_string():
-    assert _parse_capsule_error("something went wrong") == "something went wrong"
-
-
-# ── _invoke_sandbox ──────────────────────────────────────────────────
+# ── Async run ────────────────────────────────────────────────────────
 
 @pytest.mark.asyncio
-async def test_invoke_sandbox_success(run_mock):
-    run_mock.return_value = {"success": True, "result": "2", "error": None}
-
-    result = await _invoke_sandbox("any.wasm", "1+1")
-
-    assert result == "2"
-    run_mock.assert_called_once_with(file="any.wasm", args=["1+1"])
+async def test_python_tool_calls_run_python():
+    with patch("langchain_capsule.tools.run_python", new_callable=AsyncMock) as mock:
+        mock.return_value = "ok"
+        result = await CapsulePythonTool().arun("x = 1")
+        mock.assert_called_once_with(code="x = 1")
+        assert result == "ok"
 
 
 @pytest.mark.asyncio
-async def test_invoke_sandbox_error_raises(run_mock):
-    run_mock.return_value = {
-        "success": False,
-        "result": None,
-        "error": {"error_type": "SyntaxError", "message": "invalid syntax"},
-    }
-
-    with pytest.raises(ToolException, match="invalid syntax"):
-        await _invoke_sandbox("any.wasm", "bad code")
+async def test_js_tool_calls_run_javascript():
+    with patch("langchain_capsule.tools.run_javascript", new_callable=AsyncMock) as mock:
+        mock.return_value = "ok"
+        result = await CapsuleJSTool().arun("let x = 1")
+        mock.assert_called_once_with(code="let x = 1")
+        assert result == "ok"
 
 
-# ── Tool wiring ──────────────────────────────────────────────────────
+# ── Error handling ───────────────────────────────────────────────────
 
 @pytest.mark.asyncio
-@patch("langchain_capsule.tools.resources.path")
-async def test_python_tool_uses_correct_wasm(mock_path, run_mock):
-    run_mock.return_value = {"success": True, "result": "ok", "error": None}
-    mock_path.return_value.__enter__.return_value = "/fake/sandbox_py.wasm"
-
-    await CapsulePythonTool().arun("x")
-
-    run_mock.assert_called_once_with(file="/fake/sandbox_py.wasm", args=["x"])
+async def test_python_tool_arun_raises_tool_exception_on_error():
+    with patch("langchain_capsule.tools.run_python", new_callable=AsyncMock) as mock:
+        mock.side_effect = RuntimeError("sandbox crashed")
+        with pytest.raises(ToolException, match="sandbox crashed"):
+            await CapsulePythonTool()._arun("bad code")
 
 
 @pytest.mark.asyncio
-@patch("langchain_capsule.tools.resources.path")
-async def test_js_tool_uses_correct_wasm(mock_path, run_mock):
-    run_mock.return_value = {"success": True, "result": "ok", "error": None}
-    mock_path.return_value.__enter__.return_value = "/fake/sandbox_js.wasm"
+async def test_js_tool_arun_raises_tool_exception_on_error():
+    with patch("langchain_capsule.tools.run_javascript", new_callable=AsyncMock) as mock:
+        mock.side_effect = RuntimeError("sandbox crashed")
+        with pytest.raises(ToolException, match="sandbox crashed"):
+            await CapsuleJSTool()._arun("bad code")
 
-    await CapsuleJSTool().arun("x")
 
-    run_mock.assert_called_once_with(file="/fake/sandbox_js.wasm", args=["x"])
+@pytest.mark.asyncio
+async def test_python_tool_arun_returns_error_string():
+    """handle_tool_error=True means tool.arun() returns the error as a string instead of raising."""
+    with patch("langchain_capsule.tools.run_python", new_callable=AsyncMock) as mock:
+        mock.side_effect = RuntimeError("sandbox crashed")
+        result = await CapsulePythonTool().arun("bad code")
+        assert "sandbox crashed" in result
+
+
+@pytest.mark.asyncio
+async def test_js_tool_arun_returns_error_string():
+    with patch("langchain_capsule.tools.run_javascript", new_callable=AsyncMock) as mock:
+        mock.side_effect = RuntimeError("sandbox crashed")
+        result = await CapsuleJSTool().arun("bad code")
+        assert "sandbox crashed" in result
 
 
 # ── Sync wrapper ─────────────────────────────────────────────────────
 
-@patch("langchain_capsule.tools.resources.path")
-def test_sync_run_delegates_to_async(mock_path, run_mock):
-    run_mock.return_value = {"success": True, "result": "2", "error": None}
-    mock_path.return_value.__enter__.return_value = "/fake/sandbox_py.wasm"
+def test_python_tool_sync_run():
+    with patch("langchain_capsule.tools.run_python", new_callable=AsyncMock) as mock:
+        mock.return_value = "2"
+        result = CapsulePythonTool().run("1+1")
+        assert result == "2"
 
-    result = CapsulePythonTool().run("1+1")
 
-    assert result == "2"
+def test_js_tool_sync_run():
+    with patch("langchain_capsule.tools.run_javascript", new_callable=AsyncMock) as mock:
+        mock.return_value = "2"
+        result = CapsuleJSTool().run("1+1")
+        assert result == "2"
+
+
+def test_python_tool_sync_run_raises_tool_exception_on_error():
+    with patch("langchain_capsule.tools.run_python", new_callable=AsyncMock) as mock:
+        mock.side_effect = RuntimeError("sandbox crashed")
+        with pytest.raises(ToolException, match="sandbox crashed"):
+            CapsulePythonTool()._run("bad code")
+
+
+@pytest.mark.asyncio
+async def test_python_tool_sync_run_from_async_context():
+    """_run must work even when called from within a running event loop."""
+    with patch("langchain_capsule.tools.run_python", new_callable=AsyncMock) as mock:
+        mock.return_value = "42"
+        result = CapsulePythonTool()._run("21 * 2")
+        assert result == "42"
+
+
+# ── Tool metadata ────────────────────────────────────────────────────
+
+def test_python_tool_name():
+    assert CapsulePythonTool().name == "python_execution"
+
+
+def test_js_tool_name():
+    assert CapsuleJSTool().name == "javascript_execution"
+
+
+def test_python_tool_handle_tool_error_enabled():
+    assert CapsulePythonTool().handle_tool_error is True
+
+
+def test_js_tool_handle_tool_error_enabled():
+    assert CapsuleJSTool().handle_tool_error is True

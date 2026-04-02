@@ -3,65 +3,190 @@ Capsule integration for running untrusted code securely in isolated WebAssembly 
 """
 
 import asyncio
-from importlib import resources
-from typing import Any
+from concurrent.futures import ThreadPoolExecutor
+from typing import Optional
 
-from capsule import run
+from capsule_adapter import run_javascript, run_python
 from langchain_core.tools import BaseTool, ToolException
+from pydantic import PrivateAttr
 
-def _get_wasm(filename: str) -> str:
-    """Resolve the path to a .wasm file bundled inside this package."""
-    with resources.path("langchain_capsule.sandboxes", filename) as path:
-        return str(path)
+from .session import JSSession, PythonSession
 
 
-def _parse_capsule_error(error: Any) -> str:
-    """Extract a human-readable message from a Capsule error payload."""
-    if isinstance(error, dict):
-        return error.get("message") or error.get("error_type") or str(error)
-    return str(error)
+def _run_sync(coro):
+    """Run a coroutine synchronously, even when called from within a running event loop."""
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
 
-
-async def _invoke_sandbox(wasm_file: str, code: str) -> str:
-    """Call the Capsule sandbox and return the result value only."""
-    res = await run(file=wasm_file, args=[code])
-
-    if res.get("success"):
-        return str(res.get("result", ""))
-
-    raise ToolException(_parse_capsule_error(res.get("error")))
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        return pool.submit(asyncio.run, coro).result()
 
 
 class CapsulePythonTool(BaseTool):
     """Execute Python code inside an isolated Capsule WebAssembly sandbox."""
 
-    name: str = "python_repl"
+    name: str = "python_execution"
     description: str = (
         "Execute Python code in a secure isolated WebAssembly sandbox. "
+        "Each call is independent — no state is preserved between calls. "
         "Both standard output (print statements) and the last evaluated expression are returned. "
         "Supports pure Python only (no C extensions like numpy/pandas)."
     )
     handle_tool_error: bool = True
 
     def _run(self, query: str) -> str:
-        return asyncio.run(_invoke_sandbox(_get_wasm("sandbox_py.wasm"), query))
+        try:
+            return _run_sync(run_python(code=query))
+        except Exception as e:
+            raise ToolException(str(e)) from e
 
     async def _arun(self, query: str) -> str:
-        return await _invoke_sandbox(_get_wasm("sandbox_py.wasm"), query)
+        try:
+            return await run_python(code=query)
+        except Exception as e:
+            raise ToolException(str(e)) from e
 
 
 class CapsuleJSTool(BaseTool):
     """Execute JavaScript code inside an isolated Capsule WebAssembly sandbox."""
 
-    name: str = "javascript_repl"
+    name: str = "javascript_execution"
     description: str = (
         "Execute JavaScript code in a secure isolated WebAssembly sandbox. "
-        "Both standard output (console logs) and the last evaluated expression are returned."
+        "Each call is independent — no state is preserved between calls. "
+        "Both standard output (console.log) and the last evaluated expression are returned."
     )
     handle_tool_error: bool = True
 
     def _run(self, query: str) -> str:
-        return asyncio.run(_invoke_sandbox(_get_wasm("sandbox_js.wasm"), query))
+        try:
+            return _run_sync(run_javascript(code=query))
+        except Exception as e:
+            raise ToolException(str(e)) from e
 
     async def _arun(self, query: str) -> str:
-        return await _invoke_sandbox(_get_wasm("sandbox_js.wasm"), query)
+        try:
+            return await run_javascript(code=query)
+        except Exception as e:
+            raise ToolException(str(e)) from e
+
+
+class CapsulePythonREPLTool(BaseTool):
+    """Execute Python code in a persistent session, preserving state across calls."""
+
+    name: str = "python_repl"
+    description: str = (
+        "Execute Python code in a persistent session. "
+        "Variables, imports, and functions defined in previous calls remain available. "
+        "File system access is limited to /workspace. "
+        "Supports pure Python only (no C extensions like numpy/pandas)."
+    )
+    handle_tool_error: bool = True
+
+    _session: Optional[PythonSession] = PrivateAttr(default=None)
+
+    def _get_session(self) -> PythonSession:
+        if self._session is None:
+            self._session = PythonSession()
+        return self._session
+
+    def _run(self, query: str) -> str:
+        try:
+            return _run_sync(self._get_session().run(query))
+        except Exception as e:
+            raise ToolException(str(e)) from e
+
+    async def _arun(self, query: str) -> str:
+        try:
+            return await self._get_session().run(query)
+        except Exception as e:
+            raise ToolException(str(e)) from e
+
+    async def get_state(self) -> str:
+        """Return current variable names and their types."""
+        return await self._get_session().get_state()
+
+    async def import_file(self, source_path: str, destination_path: str) -> None:
+        """Copy a file from the host filesystem into the session workspace."""
+        await self._get_session().import_file(source_path, destination_path)
+
+    async def export_file(self, source_path: str, destination_path: str) -> None:
+        """Copy a file from the session workspace to the host filesystem."""
+        await self._get_session().export_file(source_path, destination_path)
+
+    async def delete_file(self, path: str) -> None:
+        """Remove a file from the session workspace."""
+        await self._get_session().delete_file(path)
+
+    async def reset(self) -> None:
+        """Clear variable state without touching workspace files."""
+        await self._get_session().reset()
+
+    async def close(self) -> None:
+        """Destroy the session and clean up all files."""
+        if self._session is not None:
+            try:
+                await self._session.close()
+            finally:
+                self._session = None
+
+
+class CapsuleJSREPLTool(BaseTool):
+    """Execute JavaScript code in a persistent session, preserving state across calls."""
+
+    name: str = "javascript_repl"
+    description: str = (
+        "Execute JavaScript code in a persistent session. "
+        "Variables and functions defined in previous calls remain available. "
+        "File system access is limited to /workspace."
+    )
+    handle_tool_error: bool = True
+
+    _session: Optional[JSSession] = PrivateAttr(default=None)
+
+    def _get_session(self) -> JSSession:
+        if self._session is None:
+            self._session = JSSession()
+        return self._session
+
+    def _run(self, query: str) -> str:
+        try:
+            return _run_sync(self._get_session().run(query))
+        except Exception as e:
+            raise ToolException(str(e)) from e
+
+    async def _arun(self, query: str) -> str:
+        try:
+            return await self._get_session().run(query)
+        except Exception as e:
+            raise ToolException(str(e)) from e
+
+    async def get_state(self) -> str:
+        """Return current variable names and their types."""
+        return await self._get_session().get_state()
+
+    async def import_file(self, source_path: str, destination_path: str) -> None:
+        """Copy a file from the host filesystem into the session workspace."""
+        await self._get_session().import_file(source_path, destination_path)
+
+    async def export_file(self, source_path: str, destination_path: str) -> None:
+        """Copy a file from the session workspace to the host filesystem."""
+        await self._get_session().export_file(source_path, destination_path)
+
+    async def delete_file(self, path: str) -> None:
+        """Remove a file from the session workspace."""
+        await self._get_session().delete_file(path)
+
+    async def reset(self) -> None:
+        """Clear variable state without touching workspace files."""
+        await self._get_session().reset()
+
+    async def close(self) -> None:
+        """Destroy the session and clean up all files."""
+        if self._session is not None:
+            try:
+                await self._session.close()
+            finally:
+                self._session = None

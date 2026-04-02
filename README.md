@@ -2,6 +2,8 @@
 
 Capsule integration for LangChain — run Python and JavaScript code in isolated WebAssembly sandboxes.
 
+[![CI](https://github.com/mavdol/langchain-capsule/actions/workflows/ci.yml/badge.svg)](https://github.com/mavdol/langchain-capsule/actions/workflows/ci.yml)
+
 ## What is this?
 
 `langchain-capsule` gives LangChain agents the ability to safely execute code in isolated WebAssembly sandboxes. The sandbox binaries are bundled inside the package — no configuration or network request required.
